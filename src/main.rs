@@ -53,25 +53,25 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
         &config,
         source_url.to_string(),
         dest_url.to_string(),
-        size.to_string()
+        size.to_string(),
     );
 
     let response = ApiGatewayProxyResponse {
         status_code: 200,
         headers: HashMap::new(),
-        multi_value_headers:  HashMap::new(),
+        multi_value_headers: HashMap::new(),
         is_base64_encoded: Option::from(false),
-        body: Option::from(result)
+        body: Option::from(result),
     };
 
-   Ok(response)
+    Ok(response)
 }
 
 fn handle_request(config: &Config, source_url: String, dest_url: String, size_as_string: String) -> String {
     let size = size_as_string.parse::<f32>().unwrap();
 
     let mut source_response = reqwest::get(source_url.as_str()).expect("Failed to download source image");
-    let mut source_image_buffer= Vec::new();
+    let mut source_image_buffer = Vec::new();
     let source_size = source_response.read_to_end(&mut source_image_buffer).unwrap();
     let img = image::load_from_memory(&source_image_buffer)
         .ok()
