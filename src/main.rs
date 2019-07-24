@@ -131,7 +131,7 @@ fn rotate_image(img: &image::DynamicImage, orientation: u32) -> Result<image::Dy
             Ok(rotated.fliph())
         },
         8 => Ok(img.rotate270()),
-        _ => img
+        _ => Ok(img.clone())
     }
 }
 
