@@ -62,7 +62,7 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
         source_url.to_string(),
         dest_url.to_string(),
         size.to_string(),
-        mime_type.to_string()
+        mime_type.to_string(),
     );
 
     let response = ApiGatewayProxyResponse {
@@ -107,7 +107,7 @@ fn write_file_to_dest_url(dest_url: String, mime_type: String, processed_image: 
     let mut result: Vec<u8> = Vec::new();
     processed_image.write_to(&mut result, get_image_format(mime_type));
     let client = reqwest::Client::new();
-    let response = client.put(dest_url.as_str()).body(result).send().unwrap_or_else( |_| panic!("Failed to upload to destination"));
+    let response = client.put(dest_url.as_str()).body(result).send().unwrap_or_else(|_| panic!("Failed to upload to destination"));
     response
 }
 
@@ -122,7 +122,6 @@ fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Re
 }
 
 fn rotate_image(img: &image::DynamicImage, orientation: u32) -> Result<image::DynamicImage, ImageError> {
-
     match orientation {
         2 => Ok(img.fliph()),
         3 => Ok(img.rotate180()),
@@ -130,12 +129,12 @@ fn rotate_image(img: &image::DynamicImage, orientation: u32) -> Result<image::Dy
         5 => {
             let rotated = img.fliph();
             Ok(rotated.rotate270())
-        },
+        }
         6 => Ok(img.rotate90()),
         7 => {
             let rotated = img.rotate270();
             Ok(rotated.fliph())
-        },
+        }
         8 => Ok(img.rotate270()),
         _ => Ok(img.clone())
     }
@@ -143,7 +142,7 @@ fn rotate_image(img: &image::DynamicImage, orientation: u32) -> Result<image::Dy
 
 fn get_image_format(mime_type: String) -> ImageOutputFormat {
     match &mime_type[..] {
-        MIME_JPEG=> ImageOutputFormat::JPEG(90),
+        MIME_JPEG => ImageOutputFormat::JPEG(90),
         MIME_PNG => ImageOutputFormat::PNG,
         _ => ImageOutputFormat::JPEG(90)
     }
