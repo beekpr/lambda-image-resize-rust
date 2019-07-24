@@ -93,17 +93,20 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
     processed_image = rotate_image(&processed_image, orientation_field.value).expect("Could not rotate image");
 
 
-
-    let mut result: Vec<u8> = Vec::new();
-    processed_image.write_to(&mut result, get_image_format(mime_type))?;
-    let client = reqwest::Client::new();
-    let response = client.put(dest_url.as_str()).body(result).send();
-
+    let response = write_file_to_dest_url(dest_url, mime_type, &mut processed_image);
     if response.is_ok() {
         return "OK".to_string();
     } else {
         panic!("Failed to upload to destination");
     }
+}
+
+fn write_file_to_dest_url(dest_url: String, mime_type: String, processed_image: &mut image::DynamicImage) -> Result<reqwest::Response, Error> {
+    let mut result: Vec<u8> = Vec::new();
+    processed_image.write_to(&mut result, get_image_format(mime_type))?;
+    let client = reqwest::Client::new();
+    let response = client.put(dest_url.as_str()).body(result).send();
+    response
 }
 
 fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Result<image::DynamicImage, ImageError> {
