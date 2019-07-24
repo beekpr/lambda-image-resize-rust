@@ -119,15 +119,20 @@ fn rotate_image(img: &image::DynamicImage, orientation: u32) -> Result<image::Dy
 
     match orientation {
         2 => Ok(img.fliph()),
-        3 => Ok(rotated_image),
-        4 => Ok(rotated_image),
-        5 => Ok(rotated_image),
-        6 => Ok(rotated_image),
-        7 => Ok(rotated_image),
-        8 => Ok(rotated_image),
+        3 => Ok(img.rotate180()),
+        4 => Ok(img.flipv()),
+        5 => {
+            let rotated = img.fliph();
+            Ok(rotated.rotate270())
+        },
+        6 => Ok(img.rotate90()),
+        7 => {
+            let rotated = img.rotate270();
+            Ok(rotated.fliph())
+        },
+        8 => Ok(img.rotate270()),
         _ => img
     }
-
 }
 
 fn get_image_format(mime_type: String) -> ImageOutputFormat {
