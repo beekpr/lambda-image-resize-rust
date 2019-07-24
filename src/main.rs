@@ -83,8 +83,12 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
         .expect("Opening image failed");
 
 
+    // READ EXIF
     let exif_reader = exif::Reader::new(&mut std::io::BufReader::new(source_image_buffer.as_slice())).unwrap();
+    let orientation = exif_reader.get_field(Tag::ExifVersion, false).unwrap();
 
+
+    // RESIZE
     let resized_image_buffer = resize_image(&img, &size, mime_type).expect("Could not resize image");
 
     let client = reqwest::Client::new();
