@@ -10,6 +10,7 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate simple_logger;
 extern crate reqwest;
+extern crate exif;
 
 use image::{ImageOutputFormat, GenericImageView, ImageError};
 
@@ -85,7 +86,7 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
 
     // READ EXIF
     let exif_reader = exif::Reader::new(&mut std::io::BufReader::new(source_image_buffer.as_slice())).unwrap();
-    let orientation = exif_reader.get_field(Tag::ExifVersion, false).unwrap();
+    let orientation = exif_reader.get_field(Tag::Orientation, false).unwrap();
 
 
     // RESIZE
