@@ -101,7 +101,7 @@ fn write_file_to_dest_url(dest_url: String, mime_type: String, processed_image: 
     let mut result: Vec<u8> = Vec::new();
     processed_image.write_to(&mut result, get_image_format(mime_type))?;
     let client = reqwest::Client::new();
-    let response = client.put(dest_url.as_str()).body(result).send().unwrap_or_else( panic!("Failed to upload to destination"));
+    let response = client.put(dest_url.as_str()).body(result).send().unwrap_or_else( || panic!("Failed to upload to destination"));
     response
 }
 
@@ -116,7 +116,8 @@ fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Re
 }
 
 fn rotate_image(img: &image::DynamicImage, orientation: exif::Value) -> Result<image::DynamicImage, ImageError> {
-
+    let rotated_image = img.rotate90();
+    Ok(rotated_image)
 }
 
 fn get_image_format(mime_type: String) -> ImageOutputFormat {
