@@ -87,12 +87,17 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
     let exif_reader = exif::Reader::new(&mut std::io::BufReader::new(source_image_buffer.as_slice())).unwrap();
     let orientation_field = exif_reader.get_field(exif::Tag::Orientation, false).unwrap();
 
-
     // RESIZE
-    let resized_image_buffer = resize_image(&img, &size, mime_type).expect("Could not resize image");
+    let mut processed_image = resize_image(&img, &size, mime_type).expect("Could not resize image");
 
+    processed_image = rotate_image(&processed_image, orientation_field.value).expect("Could not rotate image");
+
+
+
+    let mut result: Vec<u8> = Vec::new();
+    processed_image.write_to(&mut result, get_image_format(mime_type))?;
     let client = reqwest::Client::new();
-    let response = client.put(dest_url.as_str()).body(resized_image_buffer).send();
+    let response = client.put(dest_url.as_str()).body(result).send();
 
     if response.is_ok() {
         return "OK".to_string();
@@ -101,18 +106,18 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
     }
 }
 
-fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Result<Vec<u8>, ImageError> {
-    let mut result: Vec<u8> = Vec::new();
-
+fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Result<image::DynamicImage, ImageError> {
     let old_w = img.width() as f32;
     let old_h = img.height() as f32;
     let ratio = new_w / old_w;
     let new_h = (old_h * ratio).floor();
 
     let scaled_image = img.resize(*new_w as u32, new_h as u32, image::FilterType::Lanczos3);
-    scaled_image.write_to(&mut result, get_image_format(mime_type))?;
+    Ok(scaled_image)
+}
 
-    Ok(result)
+fn rotate_image(img: &image::DynamicImage, orientation: exif::Value) -> Result<image::DynamicImage, ImageError> {
+
 }
 
 fn get_image_format(mime_type: String) -> ImageOutputFormat {
