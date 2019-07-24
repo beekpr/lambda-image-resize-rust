@@ -30,6 +30,7 @@ const SIZE_KEY: &'static str = "size";
 
 const SOURCE_HEADER: &'static str = "source-url";
 const DEST_HEADER: &'static str = "destination-url";
+const MIME_HEADER: &'static str = "mime-type";
 
 
 fn main() -> Result<(), Box<Error>> {
@@ -47,6 +48,7 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
     let source_url = api_event.headers.get(SOURCE_HEADER).unwrap_or_else(|| panic!("Missing source url"));
     let dest_url = api_event.headers.get(DEST_HEADER).unwrap_or_else(|| panic!("Missing destination url"));
     let size = api_event.query_string_parameters.get(SIZE_KEY).unwrap_or_else(|| panic!("Missing size"));
+    let mime_type = api_event.headers.get(MIME_HEADER).unwrap_or(&"jpeg".to_string());
 
     info!("source_url: {}, dest_url: {}, size: {}", &source_url, &dest_url, &size);
     let result = handle_request(
@@ -54,6 +56,7 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
         source_url.to_string(),
         dest_url.to_string(),
         size.to_string(),
+        mime_type.to_string()
     );
 
     let response = ApiGatewayProxyResponse {
@@ -67,7 +70,7 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
     Ok(response)
 }
 
-fn handle_request(config: &Config, source_url: String, dest_url: String, size_as_string: String) -> String {
+fn handle_request(config: &Config, source_url: String, dest_url: String, size_as_string: String, mime_type: String) -> String {
     let size = size_as_string.parse::<f32>().unwrap();
 
     let mut source_response = reqwest::get(source_url.as_str()).expect("Failed to download source image");
@@ -78,7 +81,7 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
         .expect("Opening image failed");
 
 
-    let resized_image_buffer = resize_image(&img, &size).expect("Could not resize image");
+    let resized_image_buffer = resize_image(&img, &size, mime_type).expect("Could not resize image");
 
     let client = reqwest::Client::new();
     let response = client.put(dest_url.as_str()).body(resized_image_buffer).send();
@@ -90,7 +93,7 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
     }
 }
 
-fn resize_image(img: &image::DynamicImage, new_w: &f32) -> Result<Vec<u8>, ImageError> {
+fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Result<Vec<u8>, ImageError> {
     let mut result: Vec<u8> = Vec::new();
 
     let old_w = img.width() as f32;
@@ -99,7 +102,11 @@ fn resize_image(img: &image::DynamicImage, new_w: &f32) -> Result<Vec<u8>, Image
     let new_h = (old_h * ratio).floor();
 
     let scaled = img.resize(*new_w as u32, new_h as u32, image::FilterType::Lanczos3);
-    scaled.write_to(&mut result, ImageOutputFormat::JPEG(90))?;
+    scaled.write_to(&mut result, get_image_format(mime_type))?;
 
     Ok(result)
+}
+
+fn get_image_format(mime_type: String) -> ImageOutputFormat {
+    ImageOutputFormat::JPEG(90)
 }
