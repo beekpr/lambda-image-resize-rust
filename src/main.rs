@@ -99,9 +99,9 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
 
 fn write_file_to_dest_url(dest_url: String, mime_type: String, processed_image: &mut image::DynamicImage) -> reqwest::Response {
     let mut result: Vec<u8> = Vec::new();
-    processed_image.write_to(&mut result, get_image_format(mime_type))?;
+    processed_image.write_to(&mut result, get_image_format(mime_type));
     let client = reqwest::Client::new();
-    let response = client.put(dest_url.as_str()).body(result).send().unwrap_or_else( || panic!("Failed to upload to destination"));
+    let response = client.put(dest_url.as_str()).body(result).send().unwrap_or_else( |_| panic!("Failed to upload to destination"));
     response
 }
 
