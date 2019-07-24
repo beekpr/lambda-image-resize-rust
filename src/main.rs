@@ -53,7 +53,7 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
     let dest_url = api_event.headers.get(DEST_HEADER).unwrap_or_else(|| panic!("Missing destination url"));
     let size = api_event.query_string_parameters.get(SIZE_KEY).unwrap_or_else(|| panic!("Missing size"));
 
-    let fallback_mime_type = "jpeg".to_string();
+    let fallback_mime_type = MIME_JPEG.to_string();
     let mime_type = api_event.headers.get(MIME_HEADER).unwrap_or(&fallback_mime_type);
 
     info!("source_url: {}, dest_url: {}, size: {}", &source_url, &dest_url, &size);
