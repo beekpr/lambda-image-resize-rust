@@ -116,8 +116,18 @@ fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Re
 }
 
 fn rotate_image(img: &image::DynamicImage, orientation: u32) -> Result<image::DynamicImage, ImageError> {
-    let rotated_image = img.rotate90();
-    Ok(rotated_image)
+
+    match orientation {
+        2 => Ok(img.fliph()),
+        3 => Ok(rotated_image),
+        4 => Ok(rotated_image),
+        5 => Ok(rotated_image),
+        6 => Ok(rotated_image),
+        7 => Ok(rotated_image),
+        8 => Ok(rotated_image),
+        _ => img
+    }
+
 }
 
 fn get_image_format(mime_type: String) -> ImageOutputFormat {
