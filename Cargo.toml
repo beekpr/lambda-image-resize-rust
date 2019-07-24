@@ -15,6 +15,7 @@ rust-s3 = "0.10.0"
 image= "*"
 rayon = "1.0"
 reqwest = "0.9.18"
+kamadak-exif = "0.3.1"
 
 [[bin]]
 name = "bootstrap"
