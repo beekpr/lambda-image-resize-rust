@@ -88,12 +88,12 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
     let orientation_field = exif_reader.get_field(exif::Tag::Orientation, false).unwrap();
 
     // RESIZE
-    let mut processed_image = resize_image(&img, &size, mime_type).expect("Could not resize image");
+    let mut processed_image = resize_image(&img, &size, mime_type.clone()).expect("Could not resize image");
 
     processed_image = rotate_image(&processed_image, orientation_field.value).expect("Could not rotate image");
 
 
-    let response = write_file_to_dest_url(dest_url, mime_type, &mut processed_image);
+    let response = write_file_to_dest_url(dest_url, mime_type.clone(), &mut processed_image);
     return "OK".to_string();
 }
 
