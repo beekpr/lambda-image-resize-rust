@@ -141,7 +141,7 @@ fn rotate_image(img: &image::DynamicImage, orientation: u32) -> Result<image::Dy
 }
 
 fn get_image_format(mime_type: String) -> ImageOutputFormat {
-    match mime_type {
+    match &mime_type[..] {
         MIME_JPEG=> ImageOutputFormat::JPEG(90),
         MIME_PNG => ImageOutputFormat::PNG,
         _ => ImageOutputFormat::JPEG(90)
