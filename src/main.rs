@@ -83,6 +83,8 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
         .expect("Opening image failed");
 
 
+    let exif_reader = exif::Reader::new(&mut std::io::BufReader::new(source_image_buffer.as_slice())).unwrap();
+
     let resized_image_buffer = resize_image(&img, &size, mime_type).expect("Could not resize image");
 
     let client = reqwest::Client::new();
@@ -103,8 +105,8 @@ fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Re
     let ratio = new_w / old_w;
     let new_h = (old_h * ratio).floor();
 
-    let scaled = img.resize(*new_w as u32, new_h as u32, image::FilterType::Lanczos3);
-    scaled.write_to(&mut result, get_image_format(mime_type))?;
+    let scaled_image = img.resize(*new_w as u32, new_h as u32, image::FilterType::Lanczos3);
+    scaled_image.write_to(&mut result, get_image_format(mime_type))?;
 
     Ok(result)
 }
