@@ -24,6 +24,7 @@ use aws_lambda_events::event::apigw::ApiGatewayProxyRequest;
 use aws_lambda_events::event::apigw::ApiGatewayProxyResponse;
 use std::collections::HashMap;
 use std::io::Read;
+use std::borrow::{Borrow, BorrowMut};
 
 
 const SIZE_KEY: &'static str = "size";
@@ -83,15 +84,14 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
         .expect("Opening image failed");
 
 
-    // READ EXIF
-    let exif_reader = exif::Reader::new(&mut std::io::BufReader::new(source_image_buffer.as_slice())).unwrap();
-    let orientation_field = exif_reader.get_field(exif::Tag::Orientation, false).unwrap();
-
     // RESIZE
     let mut processed_image = resize_image(&img, &size, mime_type.clone()).expect("Could not resize image");
 
-    processed_image = rotate_image(&processed_image, orientation_field.value).expect("Could not rotate image");
-
+    // READ EXIF
+    let exif_reader = exif::Reader::new(&mut std::io::BufReader::new(source_image_buffer.as_slice())).unwrap();
+    if let Some(field) = exif_reader.get_field(exif::Tag::Orientation, false).and_then(|f| f.value.get_uint(0)) {
+        processed_image = rotate_image(&processed_image, field).expect("Could not rotate image");
+    }
 
     let response = write_file_to_dest_url(dest_url, mime_type.clone(), &mut processed_image);
     return "OK".to_string();
@@ -115,7 +115,7 @@ fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Re
     Ok(scaled_image)
 }
 
-fn rotate_image(img: &image::DynamicImage, orientation: exif::Value) -> Result<image::DynamicImage, ImageError> {
+fn rotate_image(img: &image::DynamicImage, orientation: u32) -> Result<image::DynamicImage, ImageError> {
     let rotated_image = img.rotate90();
     Ok(rotated_image)
 }
