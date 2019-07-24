@@ -92,6 +92,7 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
 
     // READ EXIF
     if mime_type.eq(MIME_JPEG) {
+        info!("Will apply EXIF rotation");
         let exif_reader = exif::Reader::new(&mut std::io::BufReader::new(source_image_buffer.as_slice())).unwrap();
         if let Some(field) = exif_reader.get_field(exif::Tag::Orientation, false).and_then(|f| f.value.get_uint(0)) {
             processed_image = rotate_image(&processed_image, field).expect("Could not rotate image");
@@ -146,5 +147,4 @@ fn get_image_format(mime_type: String) -> ImageOutputFormat {
         MIME_PNG => ImageOutputFormat::PNG,
         _ => ImageOutputFormat::JPEG(90)
     }
-
 }
