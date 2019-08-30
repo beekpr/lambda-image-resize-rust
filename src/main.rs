@@ -88,14 +88,19 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
 
 
     // RESIZE
+    info!("Will resize image");
     let mut processed_image = resize_image(&img, &size, mime_type.clone()).expect("Could not resize image");
 
     // READ EXIF
     if mime_type.eq(MIME_JPEG) {
         info!("Will apply EXIF rotation");
-        let exif_reader = exif::Reader::new(&mut std::io::BufReader::new(source_image_buffer.as_slice())).unwrap();
-        if let Some(field) = exif_reader.get_field(exif::Tag::Orientation, false).and_then(|f| f.value.get_uint(0)) {
-            processed_image = rotate_image(&processed_image, field).expect("Could not rotate image");
+        let exif_reader = exif::Reader::new(&mut std::io::BufReader::new(source_image_buffer.as_slice()));
+        if exif_reader.is_ok() {
+            if let Some(field) = exif_reader.unwrap().get_field(exif::Tag::Orientation, false).and_then(|f| f.value.get_uint(0)) {
+                processed_image = rotate_image(&processed_image, field).expect("Could not rotate image");
+            }
+        } else {
+            error!("Could not rotate image", );
         }
     }
 
