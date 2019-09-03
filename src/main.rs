@@ -64,7 +64,6 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
     );
 
     let result = handle_request(
-        &config,
         source_url.to_string(),
         dest_url.to_string(),
         size.to_string(),
@@ -82,7 +81,7 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
     Ok(response)
 }
 
-fn handle_request(config: &Config, source_url: String, dest_url: String, size_as_string: String, mime_type: String) -> String {
+fn handle_request(source_url: String, dest_url: String, size_as_string: String, mime_type: String) -> String {
     let size = size_as_string.parse::<f32>().unwrap();
 
     let mut source_response = reqwest::get(source_url.as_str()).expect("Failed to download source image");
@@ -116,7 +115,6 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
     } else {
         panic!("Failed to upload resized image");
     }
-
 }
 
 fn write_file_to_dest_url(dest_url: String, mime_type: String, processed_image: &mut image::DynamicImage) -> reqwest::Response {
