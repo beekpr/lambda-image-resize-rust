@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<Error>> {
 }
 
 fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyResponse, HandlerError> {
-    let config = Config::new();
+    let _config = Config::new();
 
     let api_event: ApiGatewayProxyRequest = serde_json::from_value(event).map_err(|e| ctx.new_error(e.to_string().as_str()))?;
 
