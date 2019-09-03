@@ -57,7 +57,7 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
     let mime_type = api_event.headers.get(MIME_HEADER).unwrap_or(&fallback_mime_type);
 
     info!(
-        "source_url: {}, dest_url: {}, size: {}",
+        "source_path: {}, dest_path: {}, size: {}",
         Url::parse(&source_url).expect("Source URL invalid").path(),
         Url::parse(&dest_url).expect("Destination URL invalid").path(),
         &size
