@@ -95,7 +95,7 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
 
     // RESIZE
     info!("Will resize image");
-    let mut processed_image = resize_image(&img, &size, mime_type.clone()).expect("Could not resize image");
+    let mut processed_image = resize_image(&img, &size).expect("Could not resize image");
 
     // READ EXIF
     if mime_type.eq(MIME_JPEG) {
@@ -127,7 +127,7 @@ fn write_file_to_dest_url(dest_url: String, mime_type: String, processed_image: 
     response
 }
 
-fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Result<image::DynamicImage, ImageError> {
+fn resize_image(img: &image::DynamicImage, new_w: &f32) -> Result<image::DynamicImage, ImageError> {
     let old_w = img.width() as f32;
     let old_h = img.height() as f32;
     let ratio = new_w / old_w;
