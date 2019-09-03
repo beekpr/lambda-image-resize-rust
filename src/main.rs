@@ -11,8 +11,10 @@ extern crate serde_json;
 extern crate simple_logger;
 extern crate reqwest;
 extern crate exif;
+extern crate url;
 
 use image::{ImageOutputFormat, GenericImageView, ImageError};
+use url::Url;
 
 mod config;
 
@@ -24,8 +26,6 @@ use aws_lambda_events::event::apigw::ApiGatewayProxyRequest;
 use aws_lambda_events::event::apigw::ApiGatewayProxyResponse;
 use std::collections::HashMap;
 use std::io::Read;
-use std::borrow::{Borrow, BorrowMut};
-
 
 const SIZE_KEY: &'static str = "size";
 
@@ -45,7 +45,7 @@ fn main() -> Result<(), Box<Error>> {
 }
 
 fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyResponse, HandlerError> {
-    let config = Config::new();
+    let _config = Config::new();
 
     let api_event: ApiGatewayProxyRequest = serde_json::from_value(event).map_err(|e| ctx.new_error(e.to_string().as_str()))?;
 
@@ -56,9 +56,14 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
     let fallback_mime_type = MIME_JPEG.to_string();
     let mime_type = api_event.headers.get(MIME_HEADER).unwrap_or(&fallback_mime_type);
 
-    info!("source_url: {}, dest_url: {}, size: {}", &source_url, &dest_url, &size);
+    info!(
+        "source_path: {}, dest_path: {}, size: {}",
+        Url::parse(&source_url).expect("Source URL invalid").path(),
+        Url::parse(&dest_url).expect("Destination URL invalid").path(),
+        &size
+    );
+
     let result = handle_request(
-        &config,
         source_url.to_string(),
         dest_url.to_string(),
         size.to_string(),
@@ -76,12 +81,12 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
     Ok(response)
 }
 
-fn handle_request(config: &Config, source_url: String, dest_url: String, size_as_string: String, mime_type: String) -> String {
+fn handle_request(source_url: String, dest_url: String, size_as_string: String, mime_type: String) -> String {
     let size = size_as_string.parse::<f32>().unwrap();
 
     let mut source_response = reqwest::get(source_url.as_str()).expect("Failed to download source image");
     let mut source_image_buffer = Vec::new();
-    let source_size = source_response.read_to_end(&mut source_image_buffer).unwrap();
+    let _source_size = source_response.read_to_end(&mut source_image_buffer).unwrap();
     let img = image::load_from_memory(&source_image_buffer)
         .ok()
         .expect("Opening image failed");
@@ -89,7 +94,7 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
 
     // RESIZE
     info!("Will resize image");
-    let mut processed_image = resize_image(&img, &size, mime_type.clone()).expect("Could not resize image");
+    let mut processed_image = resize_image(&img, &size).expect("Could not resize image");
 
     // READ EXIF
     if mime_type.eq(MIME_JPEG) {
@@ -100,12 +105,16 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
                 processed_image = rotate_image(&processed_image, field).expect("Could not rotate image");
             }
         } else {
-            error!("Could not rotate image");
+            error!("{}", format!("Could not rotate image {}", exif_reader.err().unwrap().to_string()));
         }
     }
 
     let response = write_file_to_dest_url(dest_url, mime_type.clone(), &mut processed_image);
-    return "OK".to_string();
+    if response.status().is_success() {
+        return "OK".to_string();
+    } else {
+        panic!("Failed to upload resized image");
+    }
 }
 
 fn write_file_to_dest_url(dest_url: String, mime_type: String, processed_image: &mut image::DynamicImage) -> reqwest::Response {
@@ -116,7 +125,7 @@ fn write_file_to_dest_url(dest_url: String, mime_type: String, processed_image: 
     response
 }
 
-fn resize_image(img: &image::DynamicImage, new_w: &f32, mime_type: String) -> Result<image::DynamicImage, ImageError> {
+fn resize_image(img: &image::DynamicImage, new_w: &f32) -> Result<image::DynamicImage, ImageError> {
     let old_w = img.width() as f32;
     let old_h = img.height() as f32;
     let ratio = new_w / old_w;
