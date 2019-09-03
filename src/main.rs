@@ -58,8 +58,8 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
 
     info!(
         "source_url: {}, dest_url: {}, size: {}",
-        Url::parse(&source_url).unwrap().path(),
-        Url::parse(&dest_url).unwrap().path(),
+        Url::parse(&source_url).expect("Source URL invalid").path(),
+        Url::parse(&dest_url).expect("Destination URL invalid").path(),
         &size
     );
 
