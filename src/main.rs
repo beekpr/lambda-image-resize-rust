@@ -100,7 +100,7 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
                 processed_image = rotate_image(&processed_image, field).expect("Could not rotate image");
             }
         } else {
-            error!("Could not rotate image");
+            error!("{}", format!("Could not rotate image {}", exif_reader.err().unwrap().to_string()));
         }
     }
 
