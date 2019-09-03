@@ -13,6 +13,7 @@ extern crate reqwest;
 extern crate exif;
 
 use image::{ImageOutputFormat, GenericImageView, ImageError};
+use url::Url;
 
 mod config;
 
@@ -24,8 +25,6 @@ use aws_lambda_events::event::apigw::ApiGatewayProxyRequest;
 use aws_lambda_events::event::apigw::ApiGatewayProxyResponse;
 use std::collections::HashMap;
 use std::io::Read;
-use std::borrow::{Borrow, BorrowMut};
-
 
 const SIZE_KEY: &'static str = "size";
 
@@ -56,7 +55,13 @@ fn handle_event(event: Value, ctx: lambda::Context) -> Result<ApiGatewayProxyRes
     let fallback_mime_type = MIME_JPEG.to_string();
     let mime_type = api_event.headers.get(MIME_HEADER).unwrap_or(&fallback_mime_type);
 
-    info!("source_url: {}, dest_url: {}, size: {}", &source_url, &dest_url, &size);
+    info!(
+        "source_url: {}, dest_url: {}, size: {}",
+        Url::parse(&source_url).unwrap().path(),
+        Url::parse(&dest_url).unwrap().path(),
+        &size
+    );
+
     let result = handle_request(
         &config,
         source_url.to_string(),
