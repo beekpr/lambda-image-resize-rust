@@ -11,6 +11,7 @@ extern crate serde_json;
 extern crate simple_logger;
 extern crate reqwest;
 extern crate exif;
+extern crate url;
 
 use image::{ImageOutputFormat, GenericImageView, ImageError};
 use url::Url;
@@ -86,7 +87,7 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
 
     let mut source_response = reqwest::get(source_url.as_str()).expect("Failed to download source image");
     let mut source_image_buffer = Vec::new();
-    let source_size = source_response.read_to_end(&mut source_image_buffer).unwrap();
+    let _source_size = source_response.read_to_end(&mut source_image_buffer).unwrap();
     let img = image::load_from_memory(&source_image_buffer)
         .ok()
         .expect("Opening image failed");
@@ -110,7 +111,12 @@ fn handle_request(config: &Config, source_url: String, dest_url: String, size_as
     }
 
     let response = write_file_to_dest_url(dest_url, mime_type.clone(), &mut processed_image);
-    return "OK".to_string();
+    if response.status().is_success() {
+        return "OK".to_string();
+    } else {
+        panic!("Failed to upload resized image");
+    }
+
 }
 
 fn write_file_to_dest_url(dest_url: String, mime_type: String, processed_image: &mut image::DynamicImage) -> reqwest::Response {
